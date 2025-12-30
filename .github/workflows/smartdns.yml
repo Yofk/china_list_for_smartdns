@@ -1,0 +1,99 @@
+name: Build SmartDNS Conf from DustinWin
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 22 * * *" # 每天北京时间早上 6:00 运行
+
+env:
+  # 上游仓库地址
+  SOURCE_REPO: https://github.com/DustinWin/domain-list-custom
+  SOURCE_BRANCH: domains
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout this repo
+      uses: actions/checkout@v3
+
+    - name: Clone Source Code
+      run: |
+        git clone $SOURCE_REPO source_data -b $SOURCE_BRANCH --depth 1
+
+    - name: Generate SmartDNS Configs
+      run: |
+        mkdir -p output
+        cd source_data
+        
+        # =======================================================
+        # 定义转换函数 (核心逻辑)
+        # 参数1: 输入文件名 (例如 cn.list)
+        # 参数2: 输出文件名 (例如 cn.smartdns.conf)
+        # 参数3: SmartDNS 服务器组 (例如 domestic 或 gfw)
+        # 参数4: 测速模式 (例如 tcp:80 或 none)
+        # 参数5: 额外参数 (例如 -address - 或 -address #)
+        # =======================================================
+        convert_list() {
+            local input=$1
+            local output="../output/$2"
+            local group=$3
+            local speed=$4
+            local extra=$5
+            
+            echo "正在转换: $input -> $output"
+            
+            if [ -f "$input" ]; then
+                # 逻辑解释：
+                # 1. grep: 只筛选以 DOMAIN 或 DOMAIN-SUFFIX 开头的行
+                # 2. sed: 提取逗号后面的域名，并拼接成 smartdns 格式
+                grep -E "^(DOMAIN|DOMAIN-SUFFIX)," "$input" | \
+                sed -E "s/^(DOMAIN|DOMAIN-SUFFIX),(.*)/domain-rules \/\2\/ -nameserver $group -speed-check-mode $speed $extra/" > "$output"
+            else
+                echo "警告: 文件 $input 不存在，跳过。"
+            fi
+        }
+
+        # =======================================================
+        # 1. 处理国内列表 (走 domestic 组，开启测速)
+        # =======================================================
+        # 说明：-address - 表示不强制指定IP，只指定解析组
+        convert_list "cn.list" "cn.smartdns.conf" "domestic" "tcp:80" "-address -"
+        convert_list "apple-cn.list" "apple-cn.smartdns.conf" "domestic" "tcp:80" "-address -"
+        convert_list "games-cn.list" "games-cn.smartdns.conf" "domestic" "tcp:80" "-address -"
+        convert_list "google-cn.list" "google-cn.smartdns.conf" "domestic" "tcp:80" "-address -"
+        convert_list "microsoft-cn.list" "microsoft-cn.smartdns.conf" "domestic" "tcp:80" "-address -"
+
+        # =======================================================
+        # 2. 处理广告列表 (直接屏蔽)
+        # =======================================================
+        # 说明：-address # 表示返回 NXDOMAIN 或者屏蔽
+        convert_list "ads.list" "ads.smartdns.conf" "#" "none" "-address #"
+
+        # =======================================================
+        # 3. 处理国外/特定列表 (走 gfw 组，关闭测速，防污染)
+        # =======================================================
+        # 你可以根据 DustinWin 仓库里实际的文件名添加更多
+        #convert_list "gfw.list" "gfw.smartdns.conf" "gfw" "none" ""
+
+        # 如果你想把所有 cn 以外的都当做 gfw 处理，可以按需添加
+        # convert_list "bilibili.list" "bilibili.smartdns.conf" "domestic" "tcp:80" "-address -"
+
+        cd ..
+        ls -lh output/
+
+    - name: Commit and Push
+      run: |
+        # 将生成的文件移动到仓库根目录（或者你指定的目录）
+        cp -f output/*.conf .
+        
+        # 配置 git
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        # 提交更改
+        git add *.smartdns.conf
+        # 如果没有变化就不提交，避免报错
+        git commit -m "Auto update SmartDNS rules from DustinWin" || exit 0
+        git push
