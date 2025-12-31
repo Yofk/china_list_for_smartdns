@@ -39,17 +39,23 @@ jobs:
             local input=$1
             local output="../output/$2"
             local group=$3
-            local speed=$4
+            local speed_val=$4
             local extra=$5
+            
+            # --- 核心修改开始 ---
+            # 动态构建测速字符串。如果传入了 speed_val，则拼接参数；否则为空。
+            local speed_str=""
+            if [ -n "$speed_val" ]; then
+                speed_str="-speed-check-mode $speed_val"
+            fi
+            # --- 核心修改结束 ---
             
             echo "正在转换: $input -> $output"
             
             if [ -f "$input" ]; then
-                # 逻辑解释：
-                # 1. grep: 只筛选以 DOMAIN 或 DOMAIN-SUFFIX 开头的行
-                # 2. sed: 提取逗号后面的域名，并拼接成 smartdns 格式
+                # 注意：这里把原来的硬编码 -speed-check-mode 换成了变量 $speed_str
                 grep -E "^(DOMAIN|DOMAIN-SUFFIX)," "$input" | \
-                sed -E "s/^(DOMAIN|DOMAIN-SUFFIX),(.*)/domain-rules \/\2\/ -nameserver $group -speed-check-mode $speed $extra/" > "$output"
+                sed -E "s/^(DOMAIN|DOMAIN-SUFFIX),(.*)/domain-rules \/\2\/ -nameserver $group $speed_str $extra/" > "$output"
             else
                 echo "警告: 文件 $input 不存在，跳过。"
             fi
