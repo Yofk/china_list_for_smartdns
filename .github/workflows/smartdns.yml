@@ -64,6 +64,7 @@ jobs:
         convert_list "games-cn.list" "games-cn.smartdns.conf" "domestic" "tcp:80"
         convert_list "google-cn.list" "google-cn.smartdns.conf" "domestic" "tcp:80"
         convert_list "microsoft-cn.list" "microsoft-cn.smartdns.conf" "domestic" "tcp:80"
+        convert_list "private.list" "private.smartdns.conf" "domestic"
 
         # =======================================================
         # 2. 处理广告列表 (直接屏蔽)
