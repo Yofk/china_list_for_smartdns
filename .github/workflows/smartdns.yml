@@ -65,7 +65,7 @@ jobs:
         # 1. 处理国内列表 (走 domestic 组，开启测速)
         # =======================================================
         # 说明：-address - 表示不强制指定IP，只指定解析组
-        convert_list "cn.list" "cn.smartdns.conf" "domestic" "tcp:80" "-address -"
+        convert_list "cn.list" "cn.smartdns.conf" "domestic" "tcp:80"
         convert_list "apple-cn.list" "apple-cn.smartdns.conf" "domestic" "tcp:80"
         convert_list "games-cn.list" "games-cn.smartdns.conf" "domestic" "tcp:80"
         convert_list "google-cn.list" "google-cn.smartdns.conf" "domestic" "tcp:80"
