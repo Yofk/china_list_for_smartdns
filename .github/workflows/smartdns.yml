@@ -7,7 +7,7 @@ on:
 
 env:
   # 上游仓库地址
-  SOURCE_REPO: https://github.com/DustinWin/domain-list-custom
+  SOURCE_REPO: https://github.com/Yofk/domain-list-custom
   SOURCE_BRANCH: domains
 
 jobs:
