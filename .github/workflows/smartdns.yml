@@ -3,7 +3,7 @@ name: Build SmartDNS Conf from DustinWin
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 19 * * *" # 每天北京时间早上 6:00 运行
+    - cron: "0 19 * * *" # 每天北京时间凌晨 3:00 运行
 
 env:
   # 上游仓库地址
