@@ -101,6 +101,10 @@ jobs:
         
         # 提交更改
         git add *.smartdns.conf
-        # 如果没有变化就不提交，避免报错
-        git commit -m "Auto update SmartDNS rules from DustinWin" || exit 0
-        git push
+        # 检查暂存区是否有变化，没有就不创建空 commit
+        if git diff --cached --quiet; then
+          echo "No changes detected, skipping commit."
+        else
+          git commit -m "Auto update SmartDNS rules from DustinWin"
+          git push
+        fi
