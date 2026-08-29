@@ -54,12 +54,9 @@ jobs:
             
             if [ -f "$input" ]; then
                 # 注意：这里把原来的硬编码 -speed-check-mode 换成了变量 $speed_str
-                # SmartDNS 全局禁用 IPv6（AAAA）；每条域名规则也显式过滤 IPv6。
-                {
-                    printf '%s\n' 'force-AAAA-SOA yes'
-                    grep -E "^(DOMAIN|DOMAIN-SUFFIX)," "$input" | \
-                    sed -E "s/^(DOMAIN|DOMAIN-SUFFIX),(.*)/domain-rules \/\2\/ -nameserver $group $speed_str $extra -address #6/"
-                } > "$output"
+                # 每条域名规则显式过滤 IPv6（AAAA），保留 IPv4（A）。
+                grep -E "^(DOMAIN|DOMAIN-SUFFIX)," "$input" | \
+                sed -E "s/^(DOMAIN|DOMAIN-SUFFIX),(.*)/domain-rules \/\2\/ -nameserver $group $speed_str $extra -address #6/" > "$output"
             else
                 echo "警告: 文件 $input 不存在，跳过。"
             fi
